@@ -18,7 +18,9 @@ let urlDB;
 if (process.env.NODE_ENV === 'dev') {
   urlDB = 'mongodb://localhost:27017/cafe';
 }else {
-  urlDB = 'mongodb+srv://jose1:PqwiKgtezKS3Ps9a@cluster0-doyqt.mongodb.net/cafe';
+  //urlDB = 'mongodb+srv://jose1:PqwiKgtezKS3Ps9a@cluster0-doyqt.mongodb.net/cafe';
+  //Se crea en terminal una variable de entorno con el nombre MONGO_URI que tiene el valor de la url de la base de datos en mongoAtlas,,, mongodb+srv://jose1:PqwiKgtezKS3Ps9a@cluster0-doyqt.mongodb.net/cafe,,,,,, esto es para que al momento de subir al repositorio el proyecto no se envie esta url de la base de datos,, 
+  urlDB = process.env.MONGO_URI;
 }
 
 //el .URLDB es un nombre creado por nosotros que le damos el valor de let urlDB
