@@ -13,8 +13,9 @@ app.use(bodyParser.urlencoded({ extended: false }))
  
 // parse application/json,, convertimos en formato json
 app.use(bodyParser.json())
-//para que use la configuracion de las routes que cree
-app.use(require('./routes/usuario'))
+
+//configuracion global de rutas
+app.use(require('./routes/index'));
 
 //mongoose.connect es para conecar a la base de datos que aqui se especifica
 mongoose.connect(process.env.URLDB, {

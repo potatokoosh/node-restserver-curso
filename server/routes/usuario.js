@@ -2,9 +2,12 @@ const express = require('express');
 const bcrypt = require('bcryptjs');//para encriptar
 const _ = require('underscore');//permite filtrar objetos
 const Usuario = require('../models/usuario');
+const { verificaToken, verificaAdmin_Role } = require ('../middlewares/autenticacion');
 const app = express();
 
-app.get('/usuario', function (req, res) {
+//el verificaToken es un middleware,, tenemos toda la informacion del usuario en jwt,, de esta manera no esta legible 
+app.get('/usuario', verificaToken, (req, res) => {
+
 
     let desde = req.query.desde || 0;//sino tiene valor desde entonces su valor 0
     desde = Number(desde);//convirtiendo desde a numero
@@ -41,7 +44,8 @@ app.get('/usuario', function (req, res) {
 });
 
 //el post se utiliza como servicio de peticion al servidor para crear nuevos registros
-app.post('/usuario', function (req, res) {
+//[verificaToken,verificaAdmin_Role] estos son middlewares, que van a verificar si la informacion del usuario que hizo login,, tiene los privilegios para hacer esta peticion
+app.post('/usuario', [verificaToken,verificaAdmin_Role], function (req, res) {
   let body = req.body;//
 
   let usuario = new Usuario({
@@ -50,7 +54,7 @@ app.post('/usuario', function (req, res) {
     password: bcrypt.hashSync (body.password, 10),//encripto la password
     role: body.role
   });
-  //para guardar en la base de datos,, save es una palabra reservada de mongoose,, Recibo dos parametros un error o un usuarioDB
+  //para guardar en la base de datos,, save es una palabra reservada de mongoose,, Recibo dos parametros un error o un usuarioDB, SI el let usuario tiene un valor entonces el callback usuarioDB toma ese valor 
   usuario.save((err, usuarioDB) => {
     if (err){
       return res.status(400).json({
@@ -70,7 +74,7 @@ app.post('/usuario', function (req, res) {
 });
 
 //el put se utiliza como servicio de peticion al servidor para actualizar datos
-app.put('/usuario/:id', function (req, res) {
+app.put('/usuario/:id', [verificaToken,verificaAdmin_Role], function (req, res) {
 
   let id = req.params.id;
   //con _.pick de el require underscorejs.org,, permitr indicar cuales parametros voy a permitir actualizar, y solo permite los que estan dentro del arreglo []
@@ -95,7 +99,7 @@ app.put('/usuario/:id', function (req, res) {
 
 });
 //el delete se utiliza como servicio de peticion al servidor para eliminar datos
-app.delete('/usuario/:id', function (req, res) {
+app.delete('/usuario/:id', [verificaToken,verificaAdmin_Role], function (req, res) {
 
   let id = req.params.id;
 
