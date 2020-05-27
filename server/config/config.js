@@ -41,3 +41,9 @@ if (process.env.NODE_ENV === 'dev') {
 
 //el .URLDB es un nombre creado por nosotros que le damos el valor de let urlDB
 process.env.URLDB = urlDB
+
+// ===========================
+//   Google Client ID
+//============================
+
+process.env.CLIENT_ID = process.env.CLIENT_ID || "744675548988-7mhdfm092ljp9o1fbqd95gd0cm5bubbk.apps.googleusercontent.com"

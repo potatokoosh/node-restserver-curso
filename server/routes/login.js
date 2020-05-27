@@ -2,6 +2,9 @@ const express = require('express');
 const bcrypt = require('bcryptjs');//para encriptar
 const jwt = require('jsonwebtoken');
 
+const {OAuth2Client} = require('google-auth-library');//para la autenticacion de google
+const client = new OAuth2Client(process.env.CLIENT_ID);//para la autenticacion de google
+
 const Usuario = require('../models/usuario');
 
 const app = express();
@@ -65,6 +68,113 @@ app.post('/login', (req, res) => {
   })
 
 })
+
+// Configuraciones de Google
+async function verify(token) {
+  const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
+      // Or, if multiple clients access the backend:
+      //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+  });
+  const payload = ticket.getPayload();
+  console.log(payload.name);
+
+  return{//estos nombre de variables nombre, email, img,google,, los utilizamos para relacionarlos con el archivo de model/usuarios.js
+    nombre: payload.name,
+    email: payload.email,
+    img: payload.picture,
+    google: true 
+  }
+  
+}
+
+
+app.post('/google', async (req, res) => {
+
+  //idtoken viene del req, que asi llama google la variable y asi la mensionamos en el public/index.html
+  let token = req.body.idtoken;
+
+  let googleUser = await verify(token)
+      .catch(e => {
+        return res.status(403).json({
+          ok: false,
+          err: e
+        });
+      });
+
+  //validando si el usuario de google ya esta registrado en la base de datos
+  //email es el de base de datos y googleUser.email es el email de google 
+  Usuario.findOne({email: googleUser.email}, (err, usuarioDB) =>{
+
+    if (err){
+      return res.status(500).json({
+        ok: false,
+        err// esto imprime el error si entra a este if
+      });
+    };
+
+    //usuarioDB es un usuario de base de datos y el model de usuario tiene la variable google, entonces si esta variable es false,, es por que ya se habia registrado por el metodo normal y no por google,, asi que no lo debe dejar registrar por google,,
+    if (usuarioDB){
+      if(usuarioDB.google === false){
+        return res.status(400).json({
+          ok:false,
+          err: {
+            message: 'Debe de usar su autenticacion normal'
+          }
+        })
+      }else{// si si se habia registrado con google quiero hacer esta accion//renovar el token
+        //Utilizando jsonwebtoken
+        let token = jwt.sign({
+          usuario: usuarioDB // Data, informacion usuario
+          },process.env.SEED,// secret o SEED,, es una palabra clave
+          {expiresIn: process.env.CADUCIDAD_TOKEN}//segundo * min * horas * dias,, expira
+        );
+
+          return res.json({
+            ok: true,
+            usuario: usuarioDB,
+            token
+          });
+
+      }
+    }else{// Si el usuario no existe en nuestra base de datos,, mensiono estas variables
+      let usuario = new Usuario();
+      usuario.nombre = googleUser.nombre;
+      usuario.email = googleUser.email;
+      usuario.img = googleUser.img;
+      usuario.google = true;//se esta creando el usuario con google
+      usuario.password = ':)';//como es obligatorio en nuestro models/usuario.js pasar el password mandamos cualquier caracter para que no presente error,, pero este password como es un inicio de sesion con google la validacion de el password se hace en el appi de google,,
+
+      //guardo en base de datos a el usuario 
+      usuario.save((err, usuarioDB) => {
+        if (err){
+          return res.status(500).json({
+            ok: false,
+            err// esto imprime el error si entra a este if
+          });
+        };
+
+        //Utilizando jsonwebtoken
+        let token = jwt.sign({
+          usuario: usuarioDB // Data, informacion usuario
+          },process.env.SEED,// secret o SEED,, es una palabra clave
+          {expiresIn: process.env.CADUCIDAD_TOKEN}//segundo * min * horas * dias,, expira
+        );
+
+          return res.json({
+            ok: true,
+            usuario: usuarioDB,
+            token
+          });
+
+      })
+    }
+
+  })
+
+
+});
 
 
 module.exports = app;
