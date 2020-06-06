@@ -1,4 +1,4 @@
-//al ser este el primer archivo require('./config/config'); es lo primero que se va a ejecuar, y con esto logramos que si no encuentra el puerto en la nube lo ejecute localmente en el puerto 3000.
+//al ser este el primer archivo require('./config/config'); es lo primero que se va a ejecutar, y con esto logramos que si no encuentra el puerto en la nube lo ejecute localmente en el puerto 3000.
 require('./config/config');
 
 const express = require('express');
